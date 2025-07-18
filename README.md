@@ -5,4 +5,4 @@ project so make sure to visit it if you want to have yours anywhere you want!
 
 [PLAY NOW](https://neocharmy.github.io/runnersadventure/web/run.html?app=Sonic%20Runners%20Adventure&fractionScale=1)
 
-give it 1-2 min to load
+give it a minute to load
