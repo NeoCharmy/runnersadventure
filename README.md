@@ -11,14 +11,10 @@ note that the mentioned project also supports vitrual buttons but I've just choo
 
 ## full screen?
 I'm pretty sure you know about the F11 my friend, but if it doesn't work, do it on another tab & then back to game.
-#
+  
 about mobiles, just copy & save this as a bookmark, & while you're in game, choose your saved bookmark from address bar:
 
-<clipboard-copy for="blob-path" class="btn btn-sm BtnGroup-item">
-  javascript:(function() { document.documentElement.requestFullscreen(); })();
-</clipboard-copy>
-<div id="blob-path">src/index.js</div>
-
+<clipboard-copy value="javascript:(function() { document.documentElement.requestFullscreen(); })();">Copy</clipboard-copy>
 
 ## The game crashes?
 It will jump out of the game at some point of level 5 
