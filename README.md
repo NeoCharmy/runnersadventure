@@ -9,7 +9,8 @@ project so make sure to visit it if you want to have yours anywhere you want! ju
 
 note that the mentioned project also supports vitrual buttons but I've just choosed this full touch version for better experience
 
-## full screen?
+  
+## fullscreen?
 I'm pretty sure you know about the F11 my friend, but if it doesn't work, do it on another tab & then back to game.
   
 about mobiles, just copy & save this as a bookmark, & while you're in game, choose your saved bookmark from address bar:
@@ -18,7 +19,8 @@ about mobiles, just copy & save this as a bookmark, & while you're in game, choo
 javascript:(function() { document.documentElement.requestFullscreen(); })();
 ```
 
-## The game crashes?
+  
+## Does The game crash?
 It will jump out of the game at some point of level 5 
 there's also chance that can happen on level 4.  
 it's something different than just crashing & I'll try to solve this later.  
