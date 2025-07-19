@@ -8,7 +8,7 @@ project so make sure to visit it if you want to have yours anywhere you want! ju
 [PLAY NOW](https://neocharmy.github.io/runnersadventure/web/run.html?app=Sonic%20Runners%20Adventure&fractionScale=1)
 
 note that the mentioned project also supports vitrual buttons & keyboard but I've just choosed this full touch version here for better experience.  
-& also this page won't stay like this forever & I maybe create a full site for some embeded games in future or something. I'm not sure  
+& also this page won't stay like this forever & I'll maybe try create a full site for some embeded games in future or something. I'm not sure  
 
   
 ## fullscreen?
