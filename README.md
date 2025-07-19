@@ -25,3 +25,7 @@ It will jump out of the game at some point of level 5
 there's also chance that can happen on level 4.  
 it's something different than just crashing & I'll try to solve this later.  
 the other games mostly should be fine
+
+
+## Dark mode?
+it's not officially supported yet & has been added manually for now
