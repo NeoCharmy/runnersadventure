@@ -15,9 +15,8 @@ I'm pretty sure you know about the F11 my friend, but if it doesn't work, do it 
 about mobiles, just copy & save this as a bookmark, & while you're in game, choose your saved bookmark from address bar:
 
 ```
-function test() {
-  console.log("javascript:(function() { document.documentElement.requestFullscreen(); })();");
-}
+javascript:(function() { document.documentElement.requestFullscreen(); })();");
+
 ```
 
 ## The game crashes?
