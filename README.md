@@ -18,6 +18,6 @@ about mobiles, just copy & save this as a bookmark, & while you're in game, choo
 
 ## The game crashes?
 It will jump out of the game at some point of level 5 
-there's also chance that can happen on level 4
-it's something different than just crashing & I'll try to solve this later
+there's also chance that can happen on level 4.  
+it's something different than just crashing & I'll try to solve this later.  
 the other games mostly should be fine
