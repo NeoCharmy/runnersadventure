@@ -23,7 +23,7 @@ javascript:(function() { document.documentElement.requestFullscreen(); })();
   
 ## Does The game crash?
 It will jump out of the game at some point of level 5 
-there's also chance that can happen on level 4.  
+& there's also chance that can happen on level 4.  
 it's something different than just any crashing & I'll try to solve this later...if i can that is.  
 the other games mostly should be fine anyway
 
