@@ -12,7 +12,7 @@ note that the mentioned project also supports vitrual buttons & keyboard but I'v
 
   
 ## fullscreen?
-I'm pretty sure you know about the F11 my friend, but if it doesn't work, do it on another tab & then back to game.
+I'm pretty sure you already know about the F11 my friend, but if it doesn't work, do it on another tab & then back to game.
   
 about mobiles, just copy & save this as a bookmark, & while you're in game, choose your saved bookmark from address bar:
 
