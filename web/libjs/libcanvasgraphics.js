@@ -399,7 +399,7 @@ const CanvasGraphics = ({
     ctx.stroke();
   },
 
-  async Java_pl_zb3_freej2me_bridge_graphics_CanvasGraphics_fillPolygon(lib, ctx, x, y, n) {
+  async Java_pl_zb3_freej2me_bridge_graphics_CanvasGraphics_fillPolygon(lib, ctx, x, y, n, useSharpFillHack) {
     ctx.beginPath();
     ctx.moveTo(x[0], y[0]);
     for (let t=1;t<n;t++) {
@@ -407,6 +407,17 @@ const CanvasGraphics = ({
     }
     ctx.closePath();
     ctx.fill();
+
+    if (useSharpFillHack) {
+      // canvas has no API to disable antialiasing but some games draw polygons
+      // using multiple calls to fillTriangle.. to make it consistent, we apply
+      // additional 3 fills (this currently only works for opaque triangles)
+
+      // strokes would need changing lineJoin, could be slower
+      ctx.fill();
+      ctx.fill();
+      ctx.fill();
+    }
   },
 
   async Java_pl_zb3_freej2me_bridge_graphics_CanvasGraphics_drawText(lib, ctx, text, x, y) {
