@@ -1,53 +1,27 @@
-name: Generate jar-fix.js (from your repo)
-
-on:
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  generate:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Download freej2me-web.jar from YOUR repo
-      run: |
-        wget -nv -O web/freej2me-web.jar https://raw.githubusercontent.com/NeoCharmy/runnersadventure/main/web/freej2me-web.jar
-
-    - name: Create jar-fix.js with base64 (single line)
-      run: |
-        BASE64=$(base64 -w 0 web/freej2me-web.jar)
-        cat > web/jar-fix.js << 'EOF'
-        (function(){
-          const originalFetch = window.fetch;
-          const jarBase64 = "BASE64_PLACEHOLDER";
-
-          window.fetch = function(url, init) {
-            if (typeof url === 'string' && url.endsWith('freej2me-web.jar')) {
-              console.log('Intercepting JAR request, serving base64');
-              const binaryStr = atob(jarBase64);
-              const bytes = new Uint8Array(binaryStr.length);
-              for (let i = 0; i < binaryStr.length; i++) {
-                bytes[i] = binaryStr.charCodeAt(i);
-              }
-              return Promise.resolve(new Response(bytes.buffer, {
-                status: 200,
-                headers: { 'Content-Type': 'application/java-archive' }
-              }));
-            }
-            return originalFetch.apply(this, arguments);
-          };
-        })();
-        EOF
-        sed -i "s|BASE64_PLACEHOLDER|$BASE64|" web/jar-fix.js
-
-    - name: Commit and push jar-fix.js
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add web/jar-fix.js
-        git commit -m "Generate jar-fix.js with base64 JAR from own repo" || echo "Nothing to commit"
-        git push
+- name: Create jar-fix.js with base64 (using Node.js)
+  run: |
+    node -e "
+    const fs = require('fs');
+    const jar = fs.readFileSync('web/freej2me-web.jar');
+    const base64 = jar.toString('base64');
+    const script = \`(function(){
+      const originalFetch = window.fetch;
+      const jarBase64 = '\${base64}';
+      window.fetch = function(url, init) {
+        if (typeof url === 'string' && url.endsWith('freej2me-web.jar')) {
+          console.log('Intercepting JAR request, serving base64');
+          const binaryStr = atob(jarBase64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          return Promise.resolve(new Response(bytes.buffer, {
+            status: 200,
+            headers: { 'Content-Type': 'application/java-archive' }
+          }));
+        }
+        return originalFetch.apply(this, arguments);
+      };
+    })();\`;
+    fs.writeFileSync('web/jar-fix.js', script);
+    "
