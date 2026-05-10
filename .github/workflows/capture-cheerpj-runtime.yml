@@ -13,9 +13,9 @@ jobs:
     - name: Checkout your repository
       uses: actions/checkout@v4
 
-    - name: Clone official cheerpj-meta repository (shallow)
+    - name: Clone official cheerpj-meta (main branch)
       run: |
-        git clone --depth 1 --branch gh-pages https://github.com/leaningtech/cheerpj-meta.git cheerpj-meta
+        git clone --depth 1 --branch main https://github.com/leaningtech/cheerpj-meta.git cheerpj-meta
 
     - name: Copy 4.2 runtime into web/cheerpj-local
       run: |
