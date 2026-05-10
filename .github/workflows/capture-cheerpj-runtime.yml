@@ -1,4 +1,4 @@
-name: Capture CheerpJ Runtime (Launch Game)
+name: Generate jar-fix.js (without line breaks)
 
 on:
   workflow_dispatch:
@@ -7,76 +7,50 @@ permissions:
   contents: write
 
 jobs:
-  capture:
+  generate:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup Node.js & Playwright
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Install Playwright
+    - name: Download freej2me-web.jar
       run: |
-        npm init -y
-        npm install playwright
-        npx playwright install chromium
+        wget -nv -O web/freej2me-web.jar https://raw.githubusercontent.com/WamWooWam/freej2me-web/master/freej2me-web.jar
 
-    - name: Launch game and capture every CheerpJ file
+    - name: Create jar-fix.js with base64 (single line)
       run: |
-        node -e '
-        const { chromium } = require("playwright");
-        const fs = require("fs");
-        const path = require("path");
+        # Encode to base64 without line breaks (-w 0)
+        BASE64=$(base64 -w 0 web/freej2me-web.jar)
+        # Write the interception script, use printf to safely insert the variable
+        cat > web/jar-fix.js << 'EOF'
+        (function(){
+          const originalFetch = window.fetch;
+          const jarBase64 = "BASE64_PLACEHOLDER";
 
-        (async () => {
-          const browser = await chromium.launch();
-          const page = await browser.newPage();
-
-          // Intercept and save every CheerpJ CDN response
-          page.on("response", async (response) => {
-            const url = response.url();
-            if (!url.startsWith("https://cjrtnc.leaningtech.com/")) return;
-
-            try {
-              const parsed = new URL(url);
-              let relativePath = parsed.pathname.replace(/^\//, ""); // e.g., "4.2/loader.js"
-              if (!relativePath) return;
-
-              const outputDir = "web/cheerpj-local";
-              const filePath = path.join(outputDir, relativePath);
-              const dir = path.dirname(filePath);
-              if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-              const buffer = await response.body();
-              fs.writeFileSync(filePath, buffer);
-              console.log(`Saved: ${relativePath} (${buffer.length} bytes)`);
-            } catch (e) {
-              console.error(`Failed to save ${url}:`, e.message);
+          window.fetch = function(url, init) {
+            if (typeof url === 'string' && url.endsWith('freej2me-web.jar')) {
+              console.log('Intercepting JAR request, serving base64');
+              const binaryStr = atob(jarBase64);
+              const bytes = new Uint8Array(binaryStr.length);
+              for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+              }
+              return Promise.resolve(new Response(bytes.buffer, {
+                status: 200,
+                headers: { 'Content-Type': 'application/java-archive' }
+              }));
             }
-          });
-
-          // Navigate directly to the game launch URL
-          await page.goto("https://neocharmy.github.io/runnersadventure/web/run.html?app=Sonic%20Runners%20Adventure", { waitUntil: "networkidle" });
-          console.log("Game launch page loaded, waiting for full CheerpJ initialization...");
-          // Wait enough time for the entire runtime to download
-          await page.waitForTimeout(30000);
-
-          await browser.close();
-          console.log("Capture complete.");
+            return originalFetch.apply(this, arguments);
+          };
         })();
-        '
+        EOF
+        # Replace the placeholder with the actual base64 string (sed works fine with large lines)
+        sed -i "s|BASE64_PLACEHOLDER|$BASE64|" web/jar-fix.js
 
-    - name: Update index.html to load local runtime
-      run: |
-        sed -i 's|https://cjrtnc.leaningtech.com/|cheerpj-local/|g' web/index.html
-
-    - name: Commit captured runtime and updated index.html
+    - name: Commit and push jar-fix.js
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add web/cheerpj-local/ web/index.html
-        git commit -m "Add full CheerpJ runtime captured from live game" || echo "Nothing to commit"
+        git add web/jar-fix.js
+        git commit -m "Generate jar-fix.js with base64 JAR (no line breaks)" || echo "Nothing to commit"
         git push
