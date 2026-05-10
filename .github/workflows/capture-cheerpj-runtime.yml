@@ -1,4 +1,4 @@
-name: Mirror CheerpJ 4.2 from CDN
+name: Capture CheerpJ Runtime (Launch Game)
 
 on:
   workflow_dispatch:
@@ -7,29 +7,76 @@ permissions:
   contents: write
 
 jobs:
-  mirror:
+  capture:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout your repository
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download entire 4.2 runtime from CDN
-      run: |
-        wget -r -np -nH --cut-dirs=2 \
-             --header="User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" \
-             --header="Referer: https://cheerpj.com/" \
-             --no-verbose \
-             -P web/cheerpj-local \
-             https://cjrtnc.leaningtech.com/4.2/
+    - name: Setup Node.js & Playwright
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
-    - name: Update index.html to use local runtime
+    - name: Install Playwright
+      run: |
+        npm init -y
+        npm install playwright
+        npx playwright install chromium
+
+    - name: Launch game and capture every CheerpJ file
+      run: |
+        node -e '
+        const { chromium } = require("playwright");
+        const fs = require("fs");
+        const path = require("path");
+
+        (async () => {
+          const browser = await chromium.launch();
+          const page = await browser.newPage();
+
+          // Intercept and save every CheerpJ CDN response
+          page.on("response", async (response) => {
+            const url = response.url();
+            if (!url.startsWith("https://cjrtnc.leaningtech.com/")) return;
+
+            try {
+              const parsed = new URL(url);
+              let relativePath = parsed.pathname.replace(/^\//, ""); // e.g., "4.2/loader.js"
+              if (!relativePath) return;
+
+              const outputDir = "web/cheerpj-local";
+              const filePath = path.join(outputDir, relativePath);
+              const dir = path.dirname(filePath);
+              if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+              const buffer = await response.body();
+              fs.writeFileSync(filePath, buffer);
+              console.log(`Saved: ${relativePath} (${buffer.length} bytes)`);
+            } catch (e) {
+              console.error(`Failed to save ${url}:`, e.message);
+            }
+          });
+
+          // Navigate directly to the game launch URL
+          await page.goto("https://neocharmy.github.io/runnersadventure/web/run.html?app=Sonic%20Runners%20Adventure", { waitUntil: "networkidle" });
+          console.log("Game launch page loaded, waiting for full CheerpJ initialization...");
+          // Wait enough time for the entire runtime to download
+          await page.waitForTimeout(30000);
+
+          await browser.close();
+          console.log("Capture complete.");
+        })();
+        '
+
+    - name: Update index.html to load local runtime
       run: |
         sed -i 's|https://cjrtnc.leaningtech.com/|cheerpj-local/|g' web/index.html
 
-    - name: Commit and push
+    - name: Commit captured runtime and updated index.html
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add web/cheerpj-local web/index.html
-        git commit -m "Add complete CheerpJ 4.2 from CDN" || echo "Nothing to commit"
+        git add web/cheerpj-local/ web/index.html
+        git commit -m "Add full CheerpJ runtime captured from live game" || echo "Nothing to commit"
         git push
