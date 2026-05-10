@@ -1,4 +1,4 @@
-name: Capture CheerpJ Runtime (Game Launch)
+name: Capture CheerpJ Runtime (Runners)
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
         npm install playwright
         npx playwright install chromium
 
-    - name: Capture CheerpJ resources while playing the game
+    - name: Launch game and capture all CheerpJ files
       run: |
         node -e '
         const { chromium } = require("playwright");
@@ -33,59 +33,57 @@ jobs:
 
         (async () => {
           const browser = await chromium.launch();
-          const context = await browser.newContext();
-          const page = await context.newPage();
+          const page = await browser.newPage();
 
-          // Intercept and save all CheerpJ CDN responses
+          // Save every CheerpJ CDN request
           page.on("response", async (response) => {
             const url = response.url();
             if (!url.startsWith("https://cjrtnc.leaningtech.com/")) return;
 
             try {
               const parsed = new URL(url);
-              let relativePath = parsed.pathname.replace(/^\//, "");
-              if (!relativePath) return;
+              let relative = parsed.pathname.replace(/^\//, "");
+              if (!relative) return;
 
-              const outputDir = "cheerpj-local";
-              const filePath = path.join(outputDir, relativePath);
+              const outDir = "cheerpj-local";
+              const filePath = path.join(outDir, relative);
               const dir = path.dirname(filePath);
               if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
               const buffer = await response.body();
               fs.writeFileSync(filePath, buffer);
-              console.log("Saved:", relativePath, "(" + buffer.length + " bytes)");
+              console.log("Saved:", relative, "(" + buffer.length + " bytes)");
             } catch (e) {
-              console.error("Failed to save", url, e.message);
+              console.error("Could not save", url, e.message);
             }
           });
 
-          // Go to your live GitHub Pages site
+          // Open your live page
           await page.goto("https://neocharmy.github.io/runnersadventure/web/", { waitUntil: "networkidle" });
 
-          // Click the game link to start Sonic Runners Adventure
+          // Click the game link to start the J2ME game
           const gameLink = await page.$("a[href='run']");
           if (gameLink) {
-            console.log("Clicking game link...");
+            console.log("Clicking game link…");
             await gameLink.click();
-            // Wait for CheerpJ to fully bootstrap and download all runtime components
+            // Wait long enough for CheerpJ to fully load
             await page.waitForTimeout(25000);
           } else {
             console.error("Game link not found!");
           }
 
           await browser.close();
-          console.log("Capture complete. All files saved in cheerpj-local/");
+          console.log("Capture finished.");
         })();
         '
 
-    - name: Update index.html to use local CheerpJ files
-      run: |
-        sed -i 's|https://cjrtnc.leaningtech.com/|cheerpj-local/|g' index.html
+    - name: Update index.html to use local files
+      run: sed -i 's|https://cjrtnc.leaningtech.com/|cheerpj-local/|g' index.html
 
-    - name: Commit captured runtime and modified index.html
+    - name: Commit everything
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add cheerpj-local/ index.html
-        git commit -m "Add local CheerpJ runtime and make game standalone" || echo "Nothing to commit"
+        git commit -m "Add local CheerpJ runtime and update index.html" || echo "No changes to commit"
         git push
