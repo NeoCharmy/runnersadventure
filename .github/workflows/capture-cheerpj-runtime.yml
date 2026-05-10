@@ -1,0 +1,199 @@
+name: Capture CheerpJ Runtime (Full Game Load)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js & Playwright
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Playwright
+      run: |
+        npm init -y
+        npm install playwright
+        npx playwright install chromium
+
+    - name: Restore original index.html (if blank)
+      run: |
+        if [ ! -s index.html ] || grep -q '^\s*$' index.html; then
+          echo "Restoring index.html..."
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>freej2me-web</title>
+            </head>
+            <body>
+              <style>
+                html, body { height: 100%; }
+                body { margin: 0; padding: 0; background-color: #eee; font-family: sans; }
+                #loading { position: absolute; display: flex; justify-content: center; align-items: center; inset: 0; font-size: 2em; }
+                main { margin: auto; width: 100%; max-width: 360px; }
+                @media (min-width: 480px) { main { max-width: 480px; } }
+                :root { --primary: #4a6cb3; --primary-dark: #395592; --secondary: #6fc276; --secondary-dark: #50a359; --danger: #e74c3c; --danger-dark: #c0392b; --gray-light: #f5f5f5; --gray: #e0e0e0; --gray-dark: #9e9e9e; --text: #333; --text-light: #666; --border-radius: 4px; --light-color: #f8f9fa; --border-color: #dee2e6; --danger-color: #dc3545; --warning-color: #ffc107; }
+                h2 { font-size: 1.3em; margin-bottom: 0.5em; }
+                input, button, select { box-sizing: border-box; background-color: white; }
+                .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+                .data-controls { display: flex; gap: 10px; }
+                .data-controls .btn { padding: 8px 16px; }
+                .game-list { margin-bottom: 20px; background-color: white; overflow: hidden; border-radius: 8px; }
+                .game-item { display: flex; align-items: stretch; justify-content: space-between; }
+                .game-item a { display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: #222; flex-grow: 1; padding: 8px; }
+                .game-item a:hover { background-color: #f8f9fa; }
+                .game-item .icon, .preview-icon { width: 32px; height: 32px; margin-right: 10px; }
+                .game-item .game-info { flex-grow: 1; }
+                .game-item button { padding: 5px 10px; background-color: hsl(211, 80%, 97%); border: none; cursor: pointer; }
+                .game-item button:hover { background-color: hsl(211, 70%, 92%); }
+                .btn { padding: 5px 8px; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 500; transition: background-color 0.2s; }
+                .btn-primary { background-color: var(--primary); color: white; }
+                .btn-primary:hover { background-color: var(--primary-dark); }
+                .btn-secondary { background-color: var(--secondary); color: white; }
+                .btn-secondary:hover { background-color: var(--secondary-dark); }
+                .btn-danger { background-color: var(--danger); color: white; }
+                .btn-danger:hover { background-color: var(--danger-dark); }
+                .btn-outline { background-color: transparent; border: 1px solid var(--gray-dark); color: var(--text); }
+                .btn-outline:hover { background-color: var(--gray); }
+                .save-button { display: block; width: 100%; font-size: 1.2em; padding: 10px; background-color: hsl(130, 65%, 30%); border: none; border-radius: 4px; cursor: pointer; color: white; }
+                .save-button:hover { background-color: hsl(130, 65%, 20%); }
+                .btn-full { display: block; padding: 8px 16px; }
+                .add-edit-header { display: flex; justify-content: space-between; align-items: center; margin-top: 2em; margin-bottom: 0.5em; }
+                .add-edit-header h2 { margin: 0; }
+                .warning-message { background-color: #fff3cd; color: #856404; padding: 10px; border-radius: var(--border-radius); margin: 10px 0; display: flex; align-items: center; gap: 10px; }
+                .loading { display: flex; align-items: center; justify-content: center; padding: 20px; }
+                .spinner { border: 3px solid rgba(0,0,0,0.1); border-radius: 50%; border-top: 3px solid var(--primary); width: 20px; height: 20px; animation: spin 1s linear infinite; margin-right: 10px; }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .form-group { margin-bottom: 15px; }
+                .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+                .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+                .keyboard-controls { background: white; padding: 12px; border-radius: 8px; margin-top: 20px; }
+                .keyboard-controls h3 { margin: 0; font-size: 1.05em; }
+                .keyboard-controls table { margin-top: 10px; width: 100%; }
+                .keyboard-controls table td { text-align: center; }
+                .keyboard-controls .key { background-color: #f5f5f5; border: 1px solid #9e9e9e; border-radius: 3px; padding: 2px 6px; font-family: monospace; font-size: 12px; }
+              </style>
+              <div id="loading">Loading...</div>
+              <main id="main" style="display: none">
+                <div class="header">
+                  <h1>freej2me-web</h1>
+                  <div class="data-controls">
+                    <button class="btn btn-outline" id="import-data-btn">Import Data</button>
+                    <input type="file" id="import-data-file" style="display: none" accept=".zip" />
+                    <button class="btn btn-outline" id="export-data-btn">Export Data</button>
+                    <a id="export-data-link" style="display: none" download="freej2me-data.zip">x</a>
+                  </div>
+                </div>
+                <h2>Installed Games</h2>
+                <div id="game-list" class="game-list">
+                  <div class="game-item">
+                    <a href="run">
+                      <div class="icon"></div>
+                      <div class="game-info">Sonic Runners Adventure</div>
+                    </a>
+                    <button>Manage</button>
+                  </div>
+                </div>
+                <div class="keyboard-controls">
+                  <h3>Keyboard controls</h3>
+                  <table>
+                    <tr><td><span class="key">Esc</span></td><td>Enter/exit freej2me options</td></tr>
+                    <tr><td><span class="key">F1</span> or <span class="key">Q</span></td><td>Left soft key</td></tr>
+                    <tr><td><span class="key">F2</span> or <span class="key">W</span></td><td>Right soft key</td></tr>
+                    <tr><td><span class="key">0</span> to <span class="key">9</span></td><td>Keypad numbers</td></tr>
+                    <tr><td>Numpad keys</td><td>Numbers with keys 123 and 789 swaped</td></tr>
+                    <tr><td><span class="key">E</span></td><td>*</td></tr>
+                    <tr><td><span class="key">R</span></td><td>#</td></tr>
+                    <tr><td><span class="key">↑</span></td><td>Up</td></tr>
+                    <tr><td><span class="key">↓</span></td><td>Down</td></tr>
+                    <tr><td><span class="key">←</span></td><td>Left</td></tr>
+                    <tr><td><span class="key">→</span></td><td>Right</td></tr>
+                    <tr><td><span class="key">⏎ Enter</span></td><td>Action key (OK button)</td></tr>
+                  </table>
+                </div>
+              </main>
+              <script src="https://cjrtnc.leaningtech.com/4.2/loader.js"></script>
+              <script type="module" src="src/launcher.js"></script>
+            </body>
+          </html>
+          EOF
+        fi
+
+    - name: Start local server and capture CheerpJ resources while running the game
+      run: |
+        python3 -m http.server 8000 &
+        sleep 2
+
+        node -e '
+        const { chromium } = require("playwright");
+        const fs = require("fs");
+        const path = require("path");
+
+        (async () => {
+          const browser = await chromium.launch();
+          const context = await browser.newContext();
+          const page = await context.newPage();
+
+          // Intercept and save all CheerpJ CDN responses
+          page.on("response", async (response) => {
+            const url = response.url();
+            if (!url.startsWith("https://cjrtnc.leaningtech.com/")) return;
+
+            try {
+              const parsed = new URL(url);
+              let relativePath = parsed.pathname.replace(/^\//, "");
+              if (!relativePath) return;
+
+              const outputDir = "cheerpj-local";
+              const filePath = path.join(outputDir, relativePath);
+              const dir = path.dirname(filePath);
+              if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+              const buffer = await response.body();
+              fs.writeFileSync(filePath, buffer);
+              console.log("Saved:", relativePath, "(" + buffer.length + " bytes)");
+            } catch (e) {
+              console.error("Failed to save", url, e.message);
+            }
+          });
+
+          // Navigate to the local page
+          await page.goto("http://localhost:8000/index.html", { waitUntil: "networkidle" });
+
+          // Click the game link to start Sonic Runners Adventure
+          const gameLink = await page.$("a[href='run']");
+          if (gameLink) {
+            console.log("Clicking game link...");
+            await gameLink.click();
+            // Wait for CheerpJ to fully bootstrap and download everything
+            await page.waitForTimeout(20000);
+          } else {
+            console.error("Game link not found!");
+          }
+
+          await browser.close();
+          console.log("Capture complete. Total files saved in cheerpj-local/");
+        })();
+        '
+
+    - name: Replace CDN URL with local path
+      run: sed -i 's|https://cjrtnc.leaningtech.com/|cheerpj-local/|g' index.html
+
+    - name: Commit captured runtime and updated index.html
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add cheerpj-local/ index.html
+        git commit -m "Add local CheerpJ runtime and offline index.html" || echo "Nothing to commit"
+        git push
