@@ -1,4 +1,4 @@
-name: Fetch Official CheerpJ 4.2 Runtime
+name: Mirror CheerpJ 4.2 from CDN
 
 on:
   workflow_dispatch:
@@ -7,22 +7,22 @@ permissions:
   contents: write
 
 jobs:
-  fetch:
+  mirror:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout your repository
       uses: actions/checkout@v4
 
-    - name: Clone official cheerpj-meta (main branch)
+    - name: Download entire 4.2 runtime from CDN
       run: |
-        git clone --depth 1 --branch main https://github.com/leaningtech/cheerpj-meta.git cheerpj-meta
+        wget -r -np -nH --cut-dirs=2 \
+             --header="User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" \
+             --header="Referer: https://cheerpj.com/" \
+             --no-verbose \
+             -P web/cheerpj-local \
+             https://cjrtnc.leaningtech.com/4.2/
 
-    - name: Copy 4.2 runtime into web/cheerpj-local
-      run: |
-        mkdir -p web/cheerpj-local
-        cp -r cheerpj-meta/4.2/* web/cheerpj-local/
-
-    - name: Update index.html to load from local runtime
+    - name: Update index.html to use local runtime
       run: |
         sed -i 's|https://cjrtnc.leaningtech.com/|cheerpj-local/|g' web/index.html
 
@@ -31,5 +31,5 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add web/cheerpj-local web/index.html
-        git commit -m "Replace runtime with official CheerpJ 4.2" || echo "Nothing to commit"
+        git commit -m "Add complete CheerpJ 4.2 from CDN" || echo "Nothing to commit"
         git push
