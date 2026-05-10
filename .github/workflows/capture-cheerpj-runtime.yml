@@ -58,7 +58,7 @@ jobs:
             }
           });
 
-          // Open your live page
+          // Open your live game page
           await page.goto("https://neocharmy.github.io/runnersadventure/web/", { waitUntil: "networkidle" });
 
           // Click the game link to start the J2ME game
@@ -77,13 +77,16 @@ jobs:
         })();
         '
 
-    - name: Update index.html to use local files
-      run: sed -i 's|https://cjrtnc.leaningtech.com/|cheerpj-local/|g' index.html
+    - name: Zip all captured CheerpJ files
+      run: zip -r cheerpj-local.zip cheerpj-local/
 
-    - name: Commit everything
+    - name: Update web/index.html to use local files
+      run: sed -i 's|https://cjrtnc.leaningtech.com/|../cheerpj-local/|g' web/index.html
+
+    - name: Commit zip, cheerpj-local folder, and updated page
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add cheerpj-local/ index.html
-        git commit -m "Add local CheerpJ runtime and update index.html" || echo "No changes to commit"
+        git add cheerpj-local/ cheerpj-local.zip web/index.html
+        git commit -m "Add CheerpJ runtime as zip + update index.html" || echo "No changes to commit"
         git push
