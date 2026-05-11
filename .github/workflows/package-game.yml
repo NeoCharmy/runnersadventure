@@ -25,10 +25,7 @@ jobs:
         run: node .github/workflows/download-game.mjs
 
       - name: Compress entire game folder
-        run: |
-          # The script creates a folder named 'runnersadventure/'
-          zip -r "SonicRunnersAdventure.zip" runnersadventure/
-          mv SonicRunnersAdventure.zip "${{ github.workspace }}/SonicRunnersAdventure.zip"
+        run: zip -r "SonicRunnersAdventure.zip" runnersadventure/
 
       - name: Commit and push archive to repository root
         run: |
