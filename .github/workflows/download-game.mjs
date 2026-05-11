@@ -1,16 +1,10 @@
 import puppeteer from 'puppeteer';
 import { writeFile, mkdir } from 'fs/promises';
 import { dirname } from 'path';
-import { createWriteStream, existsSync } from 'fs';
-import { get } from 'https';
-import { mkdirSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 
 const GAME_URL = 'https://neocharmy.github.io/runnersadventure/web/run.html?app=Sonic%20Runners%20Adventure&fractionScale=1';
-const BASE_DIR = 'runnersadventure';   // local folder to mirror the site structure
-
-// How long to wait for the game to fully load (in milliseconds)
-// The game might need a minute – adjust if necessary.
-const LOAD_DELAY = 90000;   // 90 seconds
+const LOAD_DELAY = 90000;   // 90 seconds – adjust if your game needs more time
 
 const browser = await puppeteer.launch({
   headless: 'new',
@@ -20,14 +14,15 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 const responses = [];
 
-// Collect all responses (including dynamically loaded assets)
+// Intercept ALL responses from ANY domain
 page.on('response', async (response) => {
   const url = response.url();
   const status = response.status();
-  if (status < 200 || status >= 400) return;
+  if (status < 200 || status >= 400) return;  // skip errors
 
-  // Filter only resources from our domain
-  if (!url.startsWith('https://neocharmy.github.io/runnersadventure/')) return;
+  // Optional: skip clearly unwanted stuff like analytics – remove if you want everything
+  const blockedExtensions = /\.(?:ico|woff2?|ttf|eot|svg)(\?.*)?$/i;
+  if (blockedExtensions.test(url)) return;
 
   try {
     const buffer = await response.buffer();
@@ -37,27 +32,23 @@ page.on('response', async (response) => {
   }
 });
 
-// Go to the game page and wait for it to load
 await page.goto(GAME_URL, { waitUntil: 'networkidle0', timeout: 120000 });
 
-// Wait extra time to ensure the game fully initialised (JAR loaded, etc.)
+// Wait extra time for the game to fully initialise and load all dependencies
 await new Promise(r => setTimeout(r, LOAD_DELAY));
-
-// Additional wait for any lazy-loaded resources (optional)
 await page.waitForNetworkIdle({ idleTime: 5000, timeout: 120000 }).catch(() => {});
 
 await browser.close();
 
-// Save all files preserving URL path under BASE_DIR
+// Save every response, preserving the URL path so external files sit in folders like /cdn.example.com/...
 let savedCount = 0;
 for (const { url, buffer } of responses) {
   const urlObj = new URL(url);
-  // Remove the leading '/runnersadventure/' from pathname so that we get e.g. 'web/run.html'
-  let relPath = urlObj.pathname.replace(/^\/runnersadventure\//, '');
-  if (!relPath || relPath === '/') relPath = 'index.html';
+  // Use the whole host + pathname to avoid collisions
+  let filePath = urlObj.host + urlObj.pathname;
+  if (filePath.endsWith('/')) filePath += 'index.html';
 
-  // Build local path: runnersadventure/web/run.html etc.
-  const localPath = `${BASE_DIR}/${relPath}`;
+  const localPath = `runnersadventure_offline/${filePath}`;
   const dir = dirname(localPath);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
