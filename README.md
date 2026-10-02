@@ -25,7 +25,7 @@ javascript:(function() { document.documentElement.requestFullscreen(); })();
 Unfortunately Yes; there's some kind of softlock-crash at some point on the stage 5
  
 & as a workaround for now, after disabling the game sound, you have to go "over" that loop & skip it, along with skipping the next spring. it might take you like 1-2 crashes, or maybe none.    
-& there's also chance for crashing on some random places from level 4, 10, 15, 20,... which wont happen again if you just run the game again.    
+& there's also chance for crashing at some random places from level 4, 10, 15, 20,... which wont happen again if you just run the game again.    
 you'll have to wait for the main source to get updated, so those issues can get solved. It still does count as an early version you know.
     
 the other games on this emulator are mostly fine.
