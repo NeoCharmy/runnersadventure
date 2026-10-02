@@ -22,13 +22,13 @@ javascript:(function() { document.documentElement.requestFullscreen(); })();
 
   
 ## Does The game crash?
-Yes, at some point on level 5
+Unfortunately Yes, at some point on the stage 5
  
-& as a workaround for now, after disabling the game sound (from mid-level pause menu), you have to go "over" that loop & skip it. it might take you like 1-2 crashes, or maybe none.    
-& there's also chance of crashing on some random places from level 4, 10, 15, 20,... which will be ok by just running the game again.    
+& as a workaround for now, after disabling the game sound (from the mid-level pause menu), you have to go "over" that loop & skip it. it might take you like 1-2 crashes, or maybe none.    
+& there's also chance for crashing on some random places from level 4, 10, 15, 20,... which will be ok by just running the game again.    
 you have to wait for the main source to get updated, so these issues can get solved.
     
-the other games on this emulator mostly should be fine anyway
+the other games on this emulator, mostly should be fine anyway
 
 
 ## Dark mode?
