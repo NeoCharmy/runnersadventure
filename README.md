@@ -22,7 +22,7 @@ javascript:(function() { document.documentElement.requestFullscreen(); })();
 
   
 ## Does The game crash?
-Unfortunately Yes, at some point on the stage 5
+Unfortunately Yes; there's some kind of softlock-crash at some point on the stage 5
  
 & as a workaround for now, after disabling the game sound (from the mid-level pause menu), you have to go "over" that loop & skip it. it might take you like 1-2 crashes, or maybe none.    
 & there's also chance for crashing on some random places from level 4, 10, 15, 20,... which will be ok by just running the game again.    
