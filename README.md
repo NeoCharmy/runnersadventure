@@ -5,10 +5,9 @@
 an embeded version of Sonic runners adventure java port, thanks to this Awesome [freej2me-web](https://github.com/zb3/freej2me-web) 
 project so make sure to visit it if you want to have yours anywhere you want! just give it a minute to load.
 
-[PLAY NOW](https://neocharmy.github.io/runnersadventure/web/run.html?app=Sonic%20Runners%20Adventure&fractionScale=1)
+[PLAY NOW](https://neocharmy.github.io/runnersadventure/web/run.html?app=Sonic%20Runners%20Adventure&fractionScale=1) give it a minute or two to load.
 
 note that the mentioned project also supports vitrual buttons & keyboard but I've just choose this full touch version here for better experience.  
-& also this page won't stay like this forever & I'll maybe try to create a full site for some embeded games in future or something. I'm not sure  
 
   
 ## fullscreen?
